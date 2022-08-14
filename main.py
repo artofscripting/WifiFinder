@@ -1,9 +1,20 @@
-import serial
+import serial #pyserail
 import json
 import turtle
 import sys
 import time
 import os
+import pytz
+
+UTC = pytz.utc
+
+IST = pytz.timezone('America/Chicago')
+
+from datetime import datetime
+from elasticsearch import Elasticsearch
+es = Elasticsearch(['http://localhost:9200'], basic_auth=('elastic', 'changeme'))
+
+
 
 dataExist = os.path.exists("data")
 imagesExist = os.path.exists("images")
@@ -61,6 +72,11 @@ def process_wifi_finder():
                             wifi["time"] = timestr
                             with open("data\wifi_finder.json", "a") as outfile:
                                 json.dump(wifi,outfile)
+
+                            wifi["time"] =  datetime.now(IST)
+                            resp = es.index(index="wifi-locator", id=wifi["MAC"] + "-" + timestr, document=wifi)
+                            print(resp['result'])
+
 
                             if wifi["signal"] == 100:
                                 t.color("white")
